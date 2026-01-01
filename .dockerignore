@@ -1,0 +1,16 @@
+# Git
+.git
+.gitignore
+
+# Environment & secrets
+.env
+
+# Local tooling
+.temp
+cache
+backup
+logs
+
+# OS / editor artifacts
+*.swp
+*.DS_Store
