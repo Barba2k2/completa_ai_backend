@@ -11,7 +11,7 @@ import (
 )
 
 // New wires up the HTTP routes and returns the top level router.
-func New(collectionHandler *handlers.CollectionHandler, auth *middleware.AuthMiddleware) http.Handler {
+func New(authHandler *handlers.AuthHandler, collectionHandler *handlers.CollectionHandler, shareHandler *handlers.ShareHandler, statsHandler *handlers.StatsHandler, auth *middleware.AuthMiddleware) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(cors.Handler(cors.Options{
@@ -29,11 +29,30 @@ func New(collectionHandler *handlers.CollectionHandler, auth *middleware.AuthMid
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 
+	r.Route("/auth", func(r chi.Router) {
+		r.Post("/register", authHandler.Register)
+		r.Post("/login", authHandler.Login)
+		r.With(auth.Authenticate).Get("/me", authHandler.Me)
+	})
+
 	r.Route("/collection", func(r chi.Router) {
 		r.Use(auth.Authenticate)
 		r.Get("/", collectionHandler.Get)
 		r.Put("/", collectionHandler.Update)
 		r.Post("/sync", collectionHandler.Sync)
+	})
+
+	r.Route("/share", func(r chi.Router) {
+		r.Use(auth.Authenticate)
+		r.Get("/missing", shareHandler.GetMissing)
+		r.Get("/duplicates", shareHandler.GetDuplicates)
+		r.Get("/both", shareHandler.GetBoth)
+	})
+
+	r.Route("/stats", func(r chi.Router) {
+		r.Use(auth.Authenticate)
+		r.Get("/sections", statsHandler.GetSections)
+		r.Get("/", statsHandler.GetStats)
 	})
 
 	return r
