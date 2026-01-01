@@ -14,7 +14,7 @@ import (
 	"github.com/completaai/backend/internal/middleware"
 	"github.com/completaai/backend/internal/repository"
 	"github.com/completaai/backend/internal/router"
-	"github.com/completaai/backend/pkg/supabase"
+	"github.com/completaai/backend/pkg/database"
 )
 
 func main() {
@@ -24,21 +24,26 @@ func main() {
 		log.Fatal("DATABASE_URL is not set")
 	}
 
-	if cfg.SupabaseJWTSecret == "" {
-		log.Fatal("SUPABASE_JWT_SECRET is not set")
+	if cfg.JWTSecret == "" {
+		log.Fatal("JWT_SECRET is not set")
 	}
 
-	client, err := supabase.NewClient(cfg.DatabaseURL)
+	client, err := database.NewClient(cfg.DatabaseURL)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
 	defer client.Close()
 
+	userRepo := repository.NewUserRepository(client.DB, cfg.JWTSecret)
 	collectionRepo := repository.NewCollectionRepository(client.DB)
-	collectionHandler := handlers.NewCollectionHandler(collectionRepo)
-	authMiddleware := middleware.NewAuthMiddleware(cfg.SupabaseJWTSecret)
 
-	r := router.New(collectionHandler, authMiddleware)
+	authHandler := handlers.NewAuthHandler(userRepo)
+	collectionHandler := handlers.NewCollectionHandler(collectionRepo)
+	shareHandler := handlers.NewShareHandler(collectionRepo)
+	statsHandler := handlers.NewStatsHandler(collectionRepo)
+	authMiddleware := middleware.NewAuthMiddleware(cfg.JWTSecret)
+
+	r := router.New(authHandler, collectionHandler, shareHandler, statsHandler, authMiddleware)
 
 	server := &http.Server{
 		Addr:    ":" + cfg.Port,
