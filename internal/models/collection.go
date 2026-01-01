@@ -1,16 +1,12 @@
 package models
 
-import (
-	"time"
-
-	"github.com/google/uuid"
-)
+import "time"
 
 type Collection struct {
-	ID        uuid.UUID         `json:"id"`
-	UserID    uuid.UUID         `json:"user_id"`
-	Stickers  map[string]int    `json:"stickers"`
-	UpdatedAt time.Time         `json:"updated_at"`
+	ID        string         `json:"id"`
+	UserID    string         `json:"user_id"`
+	Stickers  map[string]int `json:"stickers"`
+	UpdatedAt time.Time      `json:"updated_at"`
 }
 
 type UpdateStickersRequest struct {
