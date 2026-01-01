@@ -7,22 +7,18 @@ import (
 )
 
 type Config struct {
-	Port             string
-	DatabaseURL      string
-	SupabaseURL      string
-	SupabaseAnonKey  string
-	SupabaseJWTSecret string
+	Port        string
+	DatabaseURL string
+	JWTSecret   string
 }
 
 func Load() *Config {
 	godotenv.Load()
 
 	return &Config{
-		Port:             getEnv("PORT", "8080"),
-		DatabaseURL:      getEnv("DATABASE_URL", ""),
-		SupabaseURL:      getEnv("SUPABASE_URL", ""),
-		SupabaseAnonKey:  getEnv("SUPABASE_ANON_KEY", ""),
-		SupabaseJWTSecret: getEnv("SUPABASE_JWT_SECRET", ""),
+		Port:        getEnv("PORT", "8080"),
+		DatabaseURL: getEnv("DATABASE_URL", ""),
+		JWTSecret:   getEnv("JWT_SECRET", ""),
 	}
 }
 
