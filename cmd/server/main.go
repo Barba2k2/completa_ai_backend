@@ -41,9 +41,10 @@ func main() {
 	collectionHandler := handlers.NewCollectionHandler(collectionRepo)
 	shareHandler := handlers.NewShareHandler(collectionRepo)
 	statsHandler := handlers.NewStatsHandler(collectionRepo)
+	profileHandler := handlers.NewProfileHandler(userRepo)
 	authMiddleware := middleware.NewAuthMiddleware(cfg.JWTSecret)
 
-	r := router.New(authHandler, collectionHandler, shareHandler, statsHandler, authMiddleware)
+	r := router.New(authHandler, collectionHandler, shareHandler, statsHandler, profileHandler, authMiddleware)
 
 	server := &http.Server{
 		Addr:    ":" + cfg.Port,
