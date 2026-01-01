@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/completaai/backend/internal/models"
-	"github.com/google/uuid"
 )
 
 type CollectionRepository struct {
@@ -17,7 +16,7 @@ func NewCollectionRepository(db *sql.DB) *CollectionRepository {
 	return &CollectionRepository{db: db}
 }
 
-func (r *CollectionRepository) GetByUserID(userID uuid.UUID) (*models.Collection, error) {
+func (r *CollectionRepository) GetByUserID(userID string) (*models.Collection, error) {
 	var collection models.Collection
 	var stickersJSON []byte
 
@@ -41,9 +40,8 @@ func (r *CollectionRepository) GetByUserID(userID uuid.UUID) (*models.Collection
 	return &collection, nil
 }
 
-func (r *CollectionRepository) Create(userID uuid.UUID) (*models.Collection, error) {
+func (r *CollectionRepository) Create(userID string) (*models.Collection, error) {
 	collection := &models.Collection{
-		ID:        uuid.New(),
 		UserID:    userID,
 		Stickers:  make(map[string]int),
 		UpdatedAt: time.Now(),
@@ -54,10 +52,11 @@ func (r *CollectionRepository) Create(userID uuid.UUID) (*models.Collection, err
 		return nil, err
 	}
 
-	_, err = r.db.Exec(`
-		INSERT INTO collections (id, user_id, stickers, updated_at)
-		VALUES ($1, $2, $3, $4)
-	`, collection.ID, collection.UserID, stickersJSON, collection.UpdatedAt)
+	err = r.db.QueryRow(`
+		INSERT INTO collections (user_id, stickers, updated_at)
+		VALUES ($1, $2, $3)
+		RETURNING id
+	`, collection.UserID, stickersJSON, collection.UpdatedAt).Scan(&collection.ID)
 
 	if err != nil {
 		return nil, err
@@ -83,7 +82,7 @@ func (r *CollectionRepository) Update(collection *models.Collection) error {
 	return err
 }
 
-func (r *CollectionRepository) UpdateStickers(userID uuid.UUID, stickers map[string]int) (*models.Collection, error) {
+func (r *CollectionRepository) UpdateStickers(userID string, stickers map[string]int) (*models.Collection, error) {
 	collection, err := r.GetByUserID(userID)
 	if err != nil {
 		return nil, err
@@ -111,7 +110,7 @@ func (r *CollectionRepository) UpdateStickers(userID uuid.UUID, stickers map[str
 	return collection, nil
 }
 
-func (r *CollectionRepository) GetOrCreate(userID uuid.UUID) (*models.Collection, error) {
+func (r *CollectionRepository) GetOrCreate(userID string) (*models.Collection, error) {
 	collection, err := r.GetByUserID(userID)
 	if err != nil {
 		return nil, err
