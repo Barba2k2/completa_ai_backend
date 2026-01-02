@@ -176,6 +176,10 @@ func (r *UserRepository) Delete(id string) error {
 }
 
 func (r *UserRepository) generateToken(userID string) (string, error) {
+	return r.GenerateToken(userID)
+}
+
+func (r *UserRepository) GenerateToken(userID string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userID,
 		"exp": time.Now().Add(24 * time.Hour).Unix(),
