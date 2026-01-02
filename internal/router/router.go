@@ -32,6 +32,7 @@ func New(authHandler *handlers.AuthHandler, collectionHandler *handlers.Collecti
 	r.Route("/auth", func(r chi.Router) {
 		r.Post("/register", authHandler.Register)
 		r.Post("/login", authHandler.Login)
+		r.Post("/firebase", authHandler.FirebaseAuth)
 		r.With(auth.Authenticate).Get("/me", authHandler.Me)
 		r.With(auth.Authenticate).Delete("/account", authHandler.DeleteAccount)
 	})
@@ -61,6 +62,7 @@ func New(authHandler *handlers.AuthHandler, collectionHandler *handlers.Collecti
 		r.Get("/", profileHandler.GetProfile)
 		r.Put("/", profileHandler.UpdateProfile)
 		r.Patch("/", profileHandler.UpdateProfile)
+		r.Post("/photo", profileHandler.UpdatePhoto)
 	})
 
 	return r
