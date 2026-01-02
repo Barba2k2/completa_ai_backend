@@ -12,8 +12,10 @@ import (
 	"github.com/completaai/backend/internal/config"
 	"github.com/completaai/backend/internal/handlers"
 	"github.com/completaai/backend/internal/middleware"
+	"github.com/completaai/backend/internal/migrations"
 	"github.com/completaai/backend/internal/repository"
 	"github.com/completaai/backend/internal/router"
+	"github.com/completaai/backend/internal/services"
 	"github.com/completaai/backend/pkg/database"
 )
 
@@ -28,20 +30,37 @@ func main() {
 		log.Fatal("JWT_SECRET is not set")
 	}
 
+	if cfg.FirebaseProjectID == "" {
+		log.Fatal("FIREBASE_PROJECT_ID is not set")
+	}
+
+	firebaseSvc, err := services.NewFirebaseService(
+		cfg.FirebaseProjectID,
+		cfg.FirebaseBucket,
+	)
+	if err != nil {
+		log.Fatalf("failed to initialize Firebase: %v", err)
+	}
+
 	client, err := database.NewClient(cfg.DatabaseURL)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
 	defer client.Close()
 
+	migrator := database.NewMigrator(client.DB, migrations.FS)
+	if err := migrator.Run(); err != nil {
+		log.Fatalf("failed to run migrations: %v", err)
+	}
+
 	userRepo := repository.NewUserRepository(client.DB, cfg.JWTSecret)
 	collectionRepo := repository.NewCollectionRepository(client.DB)
 
-	authHandler := handlers.NewAuthHandler(userRepo)
+	authHandler := handlers.NewAuthHandler(userRepo, firebaseSvc)
 	collectionHandler := handlers.NewCollectionHandler(collectionRepo)
 	shareHandler := handlers.NewShareHandler(collectionRepo)
 	statsHandler := handlers.NewStatsHandler(collectionRepo)
-	profileHandler := handlers.NewProfileHandler(userRepo)
+	profileHandler := handlers.NewProfileHandler(userRepo, firebaseSvc)
 	authMiddleware := middleware.NewAuthMiddleware(cfg.JWTSecret)
 
 	r := router.New(authHandler, collectionHandler, shareHandler, statsHandler, profileHandler, authMiddleware)
