@@ -21,7 +21,6 @@ WORKDIR /app
 RUN adduser -D -g '' appuser
 
 COPY --from=builder /app/server /app/server
-COPY --from=builder /app/migrations /app/migrations
 
 USER appuser
 

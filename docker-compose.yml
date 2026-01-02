@@ -10,7 +10,6 @@ services:
       - "${DB_PORT}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./migrations:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -h localhost"]
       interval: 5s
@@ -28,9 +27,14 @@ services:
       PORT: ${PORT}
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
       JWT_SECRET: ${JWT_SECRET}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      FIREBASE_STORAGE_BUCKET: ${FIREBASE_STORAGE_BUCKET}
+      GOOGLE_APPLICATION_CREDENTIALS: /app/completa-ai.json
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - ./completa-ai.json:/app/completa-ai.json:ro
 
 volumes:
   db_data:
